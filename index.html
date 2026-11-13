@@ -3,7 +3,24 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>highgarden</title>
+    <title>Highgarden</title>
+    <script>
+      // Paint the right theme before the first frame: the Go preferences
+      // arrive over IPC, a mirror in localStorage does not.
+      (() => {
+        try {
+          const prefs = JSON.parse(localStorage.getItem("highgarden.preferences") || "null") || {};
+          const theme = prefs.theme ?? "system";
+          const dark =
+            theme === "dark" ||
+            (theme === "system" && matchMedia("(prefers-color-scheme: dark)").matches);
+          document.documentElement.classList.toggle("dark", dark);
+          if (prefs.accent) document.documentElement.dataset.accent = prefs.accent;
+        } catch {
+          // Storage can be unavailable; the defaults apply.
+        }
+      })();
+    </script>
     <link rel="stylesheet" href="./src/style.css" />
   </head>
   <body>

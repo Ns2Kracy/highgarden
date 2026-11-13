@@ -1,78 +1,226 @@
+@import "tailwindcss";
+
+/* Dark mode follows the .dark class, which src/lib/theme.ts keeps in sync
+   with the user's choice and the system preference. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
-  color-scheme: light dark;
-  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-  --bg: #f6f7f9;
-  --fg: #16181d;
-  --muted: #6b7280;
-  --card: #ffffff;
+  color-scheme: light;
+
+  --bg: #f4f5f7;
+  --surface: #ffffff;
+  --surface-2: #f9fafb;
+  --surface-hover: #f1f2f5;
+  --border: #e3e5ea;
+  --border-strong: #cdd1d9;
+  --fg: #15171c;
+  --muted: #656d7b;
+  --faint: #949ba7;
+  --danger: #d92d20;
+  --success: #14804a;
+  --warning: #b25e09;
+  --shadow-color: 220 20% 45%;
+
+  --accent: #2563eb;
+  --accent-fg: #ffffff;
+  --accent-soft: color-mix(in oklab, var(--accent) 12%, transparent);
+
+  --app-font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --app-font-mono: ui-monospace, "Cascadia Code", "SF Mono", Menlo, Consolas, monospace;
+}
+
+.dark {
+  color-scheme: dark;
+
+  --bg: #0b0d12;
+  --surface: #11141b;
+  --surface-2: #161a23;
+  --surface-hover: #1b202b;
+  --border: #232936;
+  --border-strong: #333b4c;
+  --fg: #e9ecf2;
+  --muted: #98a1b2;
+  --faint: #6c7689;
+  --danger: #f97066;
+  --success: #4ade80;
+  --warning: #fbbf24;
+  --shadow-color: 220 40% 2%;
+
   --accent: #3b82f6;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #0f1115;
-    --fg: #e8eaed;
-    --muted: #9aa0a6;
-    --card: #1a1d23;
+[data-accent="violet"] {
+  --accent: #7c3aed;
+}
+.dark[data-accent="violet"] {
+  --accent: #8b5cf6;
+}
+
+[data-accent="emerald"] {
+  --accent: #059669;
+}
+.dark[data-accent="emerald"] {
+  --accent: #10b981;
+}
+
+[data-accent="amber"] {
+  --accent: #d97706;
+  --accent-fg: #1a1203;
+}
+.dark[data-accent="amber"] {
+  --accent: #f59e0b;
+  --accent-fg: #1a1203;
+}
+
+[data-accent="rose"] {
+  --accent: #e11d48;
+}
+.dark[data-accent="rose"] {
+  --accent: #fb7185;
+}
+
+[data-accent="slate"] {
+  --accent: #475569;
+}
+.dark[data-accent="slate"] {
+  --accent: #94a3b8;
+  --accent-fg: #0b0d12;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-hover: var(--surface-hover);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-fg: var(--fg);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --color-accent: var(--accent);
+  --color-accent-fg: var(--accent-fg);
+  --color-accent-soft: var(--accent-soft);
+  --color-danger: var(--danger);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+
+  --font-sans: var(--app-font-sans);
+  --font-mono: var(--app-font-mono);
+
+  --shadow-app:
+    0 1px 2px hsl(var(--shadow-color) / 0.06), 0 8px 24px -12px hsl(var(--shadow-color) / 0.18);
+  --shadow-pop:
+    0 12px 40px -12px hsl(var(--shadow-color) / 0.35), 0 2px 8px hsl(var(--shadow-color) / 0.12);
+
+  --radius-app: 0.75rem;
+}
+
+@layer base {
+  *,
+  ::before,
+  ::after {
+    border-color: var(--border);
+  }
+
+  html,
+  body,
+  #app {
+    height: 100%;
+  }
+
+  body {
+    margin: 0;
+    overflow: hidden;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    font-synthesis: none;
+  }
+
+  ::selection {
+    background: color-mix(in oklab, var(--accent) 28%, transparent);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  input,
+  textarea,
+  button,
+  select {
+    font: inherit;
+    color: inherit;
+  }
+
+  /* Thin, quiet scrollbars like a desktop app's. */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-strong) transparent;
+  }
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--border-strong);
+    border: 3px solid transparent;
+    border-radius: 999px;
+    background-clip: content-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--faint);
+    border: 3px solid transparent;
+    background-clip: content-box;
   }
 }
 
-body {
-  margin: 0;
-  min-height: 100vh;
-  display: grid;
-  place-items: center;
-  background: var(--bg);
-  color: var(--fg);
+/* The page draws the title bar under the window controls MyGo keeps. The
+   variables come from src/style.css docs: title bar height and the room the
+   controls take on each side. */
+@utility titlebar {
+  --app-region: drag;
+  height: var(--mygo-titlebar-height, 40px);
+  padding-left: var(--mygo-titlebar-inset-left, 0px);
+  padding-right: var(--mygo-titlebar-inset-right, 0px);
 }
 
-main {
-  width: min(480px, 90vw);
-  text-align: center;
+@utility drag {
+  --app-region: drag;
 }
 
-h1 {
-  font-size: 2.25rem;
-  margin: 0 0 0.25rem;
+@utility no-drag {
+  --app-region: no-drag;
 }
 
-.muted {
-  color: var(--muted);
-}
+@layer components {
+  .animate-pop {
+    animation: pop-in 140ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
 
-form {
-  display: flex;
-  gap: 0.5rem;
-  margin: 1.5rem 0 1rem;
-}
+  .animate-fade {
+    animation: fade-in 120ms ease-out;
+  }
 
-input,
-button {
-  font: inherit;
-  padding: 0.6rem 0.9rem;
-  border-radius: 8px;
-  border: 1px solid color-mix(in srgb, var(--muted) 40%, transparent);
-  background: var(--card);
-  color: inherit;
-}
+  @keyframes pop-in {
+    from {
+      opacity: 0;
+      transform: translateY(-4px) scale(0.985);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
 
-input {
-  flex: 1;
-}
-
-button {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: white;
-  cursor: pointer;
-}
-
-.card:empty {
-  display: none;
-}
-
-.card {
-  padding: 1rem;
-  border-radius: 12px;
-  background: var(--card);
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
 }

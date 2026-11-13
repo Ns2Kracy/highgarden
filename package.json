@@ -33,6 +33,7 @@
   "devDependencies": {
     "@solidjs/diagnostics": "^2.0.0-rc.21",
     "@solidjs/vite-plugin": "^3.0.0-next.57",
+    "@tailwindcss/vite": "^4.3.5",
     "@tanstack/solid-query-devtools": "6.0.0-rc.5",
     "@tanstack/solid-router-devtools": "2.0.0-rc.8",
     "@types/bun": "1.4.4",
@@ -40,6 +41,7 @@
     "mygo-cli": "^0.9.0",
     "oxfmt": "^0.78.0",
     "oxlint": "^1.93.0",
+    "tailwindcss": "^4.3.5",
     "typescript": "^7",
     "vite": "^8"
   }

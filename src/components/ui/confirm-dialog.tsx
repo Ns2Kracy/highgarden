@@ -1,5 +1,6 @@
 import type { JSX } from "@solidjs/web";
 import { Show } from "solid-js";
+import { t } from "@/lib/i18n";
 import { Button } from "./button";
 import { Spinner } from "./spinner";
 
@@ -41,7 +42,7 @@ export function ConfirmDialog(props: {
           {props.children}
           <div class="mt-1 flex justify-end gap-2">
             <Button variant="ghost" onClick={props.onCancel} disabled={props.busy}>
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button
               variant={props.danger ? "danger" : "primary"}

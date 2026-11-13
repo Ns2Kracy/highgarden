@@ -4,9 +4,10 @@ import { For, Show, createMemo, createSignal, onSettled } from "solid-js";
 import { IconArrowRight, IconSearch } from "@/components/icons";
 import { Kbd } from "@/components/ui";
 import { cn } from "@/lib/cn";
+import { t } from "@/lib/i18n";
 import { prefs } from "@/lib/preferences";
 import { closeCommandPalette, commandOpen } from "@/lib/shell";
-import { searchTools, type Tool } from "@/framework/tool";
+import { searchTools, toolSummary, toolTitle, type Tool } from "@/framework/tool";
 import { tools, toolsById } from "@/tools";
 
 /** The searchable list of every tool, opened with Ctrl/Cmd+K. */
@@ -70,7 +71,7 @@ function PaletteDialog() {
         onClick={(event) => event.stopPropagation()}
         role="dialog"
         aria-modal="true"
-        aria-label="Search tools"
+        aria-label={t("palette.label")}
       >
         <div class="flex items-center gap-2 border-b border-border px-3">
           <IconSearch class="size-4 text-faint" />
@@ -82,8 +83,8 @@ function PaletteDialog() {
               setActive(0);
             }}
             onKeyDown={onKeyDown}
-            placeholder="Search tools…"
-            aria-label="Search tools"
+            placeholder={t("palette.placeholder")}
+            aria-label={t("palette.label")}
             class="h-11 min-w-0 flex-1 bg-transparent text-sm text-fg outline-none placeholder:text-faint"
           />
           <Kbd>Esc</Kbd>
@@ -113,12 +114,14 @@ function PaletteDialog() {
                 </span>
                 <span class="min-w-0 flex-1">
                   <span class="flex items-center gap-2 text-[13px] font-medium text-fg">
-                    {tool.title}
+                    {toolTitle(tool)}
                     <Show when={!query().trim() && prefs().recent.includes(tool.id)}>
-                      <span class="text-[10px] font-normal text-faint">recent</span>
+                      <span class="text-[10px] font-normal text-faint">
+                        {t("palette.recent")}
+                      </span>
                     </Show>
                   </span>
-                  <span class="block truncate text-xs text-muted">{tool.summary}</span>
+                  <span class="block truncate text-xs text-muted">{toolSummary(tool)}</span>
                 </span>
                 <IconArrowRight
                   class={cn(
@@ -130,23 +133,27 @@ function PaletteDialog() {
             )}
           </For>
           <Show when={results().length === 0}>
-            <p class="px-3 py-8 text-center text-sm text-muted">No tool matches “{query()}”.</p>
+            <p class="px-3 py-8 text-center text-sm text-muted">
+              {t("palette.noMatch", { query: query() })}
+            </p>
           </Show>
         </div>
 
         <div class="flex items-center justify-between border-t border-border px-3 py-2 text-[11px] text-faint">
           <span>
-            {results().length} tool{results().length === 1 ? "" : "s"}
+            {results().length === 1
+              ? t("palette.oneTool", { count: results().length })
+              : t("palette.tools", { count: results().length })}
           </span>
           <span class="flex items-center gap-3">
             <span class="flex items-center gap-1">
               <Kbd>↑</Kbd>
               <Kbd>↓</Kbd>
-              navigate
+              {t("palette.navigate")}
             </span>
             <span class="flex items-center gap-1">
               <Kbd>↵</Kbd>
-              open
+              {t("palette.open")}
             </span>
           </span>
         </div>

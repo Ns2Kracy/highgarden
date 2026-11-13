@@ -3,6 +3,7 @@ import { isMyGo } from "mygo-runtime";
 import { Show, createSignal, onSettled } from "solid-js";
 import { Badge } from "@/components/ui";
 import { events } from "@/mygo";
+import { locale, t } from "@/lib/i18n";
 import { systemInfo } from "@/lib/system";
 
 const osNames: Record<string, string> = {
@@ -13,20 +14,20 @@ const osNames: Record<string, string> = {
 
 /** The bottom bar: platform, native engine, version and clock. */
 export function StatusBar() {
-  const [clock, setClock] = createSignal(new Date().toLocaleTimeString());
+  const [clock, setClock] = createSignal(new Date());
   const info = useQuery(() => ({ queryKey: ["system-info"], queryFn: systemInfo }));
 
   onSettled(() => {
     if (!isMyGo()) return;
     return events.tick.on((time) => {
-      setClock(new Date(time).toLocaleTimeString());
+      setClock(new Date(time));
     });
   });
 
   return (
     <footer class="flex h-7 shrink-0 select-none items-center justify-between gap-3 border-t border-border bg-surface/60 px-3 text-[11px] text-faint">
       <div class="flex min-w-0 items-center gap-2">
-        <Show when={info.data} fallback={<span>Connecting…</span>}>
+        <Show when={info.data} fallback={<span>{t("status.connecting")}</span>}>
           {(data) => (
             <>
               <span class="truncate">{osNames[data().os] ?? data().os}</span>
@@ -34,17 +35,17 @@ export function StatusBar() {
               <span class="truncate">{data().arch}</span>
               <Show when={data().engine === "rust"}>
                 <Badge tone="success" class="px-1.5 py-0 text-[10px]">
-                  Rust native
+                  {t("common.rustNative")}
                 </Badge>
               </Show>
               <Show when={data().engine !== "rust"}>
                 <Badge tone="warning" class="px-1.5 py-0 text-[10px]">
-                  Go fallback
+                  {t("common.goFallback")}
                 </Badge>
               </Show>
               <Show when={data().elevated}>
                 <Badge tone="accent" class="px-1.5 py-0 text-[10px]">
-                  Admin
+                  {t("common.admin")}
                 </Badge>
               </Show>
             </>
@@ -54,7 +55,7 @@ export function StatusBar() {
       <div class="flex shrink-0 items-center gap-2">
         <Show when={info.data}>{(data) => <span>v{data().appVersion}</span>}</Show>
         <span class="text-border-strong">/</span>
-        <span class="tabular-nums">{clock()}</span>
+        <span class="tabular-nums">{clock().toLocaleTimeString(locale())}</span>
       </div>
     </footer>
   );

@@ -4,8 +4,9 @@ import { For, Show, createMemo, createSignal } from "solid-js";
 import { IconSearch, IconSettings } from "@/components/icons";
 import { Input } from "@/components/ui";
 import { cn } from "@/lib/cn";
+import { t } from "@/lib/i18n";
 import { prefs, toggleSidebar } from "@/lib/preferences";
-import { categories, searchTools, type Tool } from "@/framework/tool";
+import { categories, categoryLabel, searchTools, toolTitle, type Tool } from "@/framework/tool";
 import { toolsInCategory } from "@/tools";
 
 function ToolLink(props: { tool: Tool; collapsed: boolean }) {
@@ -13,7 +14,7 @@ function ToolLink(props: { tool: Tool; collapsed: boolean }) {
     <Link
       to="/tools/$toolId"
       params={{ toolId: props.tool.id }}
-      title={props.collapsed ? props.tool.title : undefined}
+      title={props.collapsed ? toolTitle(props.tool) : undefined}
       class={cn(
         "group flex items-center gap-2.5 rounded-md py-1.5 text-[13px] text-muted transition-colors hover:bg-surface-hover hover:text-fg",
         props.collapsed ? "justify-center px-0" : "px-2",
@@ -24,9 +25,12 @@ function ToolLink(props: { tool: Tool; collapsed: boolean }) {
     >
       <Dynamic component={props.tool.icon} class="size-4" />
       <Show when={!props.collapsed}>
-        <span class="truncate">{props.tool.title}</span>
+        <span class="truncate">{toolTitle(props.tool)}</span>
         <Show when={props.tool.native}>
-          <span class="ml-auto size-1.5 rounded-full bg-success" title="Uses the Rust module" />
+          <span
+            class="ml-auto size-1.5 rounded-full bg-success"
+            title={t("sidebar.nativeHint")}
+          />
         </Show>
       </Show>
     </Link>
@@ -41,8 +45,9 @@ export function Sidebar() {
   const groups = createMemo(() =>
     categories
       .map((category) => ({
-        ...category,
-        tools: searchTools(toolsInCategory(category.id), filter()),
+        id: category,
+        label: categoryLabel(category),
+        tools: searchTools(toolsInCategory(category), filter()),
       }))
       .filter((group) => group.tools.length > 0),
   );
@@ -61,15 +66,15 @@ export function Sidebar() {
             <Input
               value={filter()}
               onInput={(event) => setFilter(event.currentTarget.value)}
-              placeholder="Filter tools"
-              aria-label="Filter tools"
+              placeholder={t("sidebar.filter")}
+              aria-label={t("sidebar.filter")}
               class="h-8 pl-8 text-xs"
             />
           </div>
         </div>
       </Show>
 
-      <nav class="min-h-0 flex-1 overflow-y-auto px-2 pb-2" aria-label="Tools">
+      <nav class="min-h-0 flex-1 overflow-y-auto px-2 pb-2" aria-label={t("sidebar.label")}>
         <For each={groups()}>
           {(group) => (
             <div class={collapsed() ? "mb-1" : "mb-3"}>
@@ -87,14 +92,14 @@ export function Sidebar() {
           )}
         </For>
         <Show when={groups().length === 0}>
-          <p class="px-2 py-6 text-center text-xs text-faint">No tools match.</p>
+          <p class="px-2 py-6 text-center text-xs text-faint">{t("sidebar.noMatches")}</p>
         </Show>
       </nav>
 
       <div class="border-t border-border p-2">
         <Link
           to="/settings"
-          title={collapsed() ? "Settings" : undefined}
+          title={collapsed() ? t("sidebar.settings") : undefined}
           class={cn(
             "flex items-center gap-2.5 rounded-md py-1.5 text-[13px] text-muted transition-colors hover:bg-surface-hover hover:text-fg",
             collapsed() ? "justify-center px-0" : "px-2",
@@ -105,7 +110,7 @@ export function Sidebar() {
         >
           <IconSettings class="size-4" />
           <Show when={!collapsed()}>
-            <span class="flex-1">Settings</span>
+            <span class="flex-1">{t("sidebar.settings")}</span>
           </Show>
         </Link>
         <Show when={!collapsed()}>
@@ -115,7 +120,7 @@ export function Sidebar() {
             onClick={toggleSidebar}
           >
             <span class="size-4" />
-            <span>Hide sidebar</span>
+            <span>{t("sidebar.hide")}</span>
           </button>
         </Show>
       </div>

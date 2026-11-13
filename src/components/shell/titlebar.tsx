@@ -1,5 +1,6 @@
 import { IconPanelLeft, IconSearch } from "@/components/icons";
 import { Button, Kbd } from "@/components/ui";
+import { t } from "@/lib/i18n";
 import { isMac } from "@/lib/platform";
 import { prefs, toggleSidebar } from "@/lib/preferences";
 import { openCommandPalette } from "@/lib/shell";
@@ -26,7 +27,7 @@ export function TitleBar() {
           onClick={openCommandPalette}
         >
           <IconSearch class="size-3.5" />
-          <span class="flex-1 truncate text-left">Search tools…</span>
+          <span class="flex-1 truncate text-left">{t("titlebar.search")}</span>
           <span class="flex items-center gap-1">
             <Kbd>{isMac ? "⌘" : "Ctrl"}</Kbd>
             <Kbd>K</Kbd>
@@ -39,8 +40,10 @@ export function TitleBar() {
           variant="ghost"
           size="icon"
           class="no-drag"
-          title={prefs().sidebarCollapsed ? "Show sidebar" : "Hide sidebar"}
-          aria-label="Toggle sidebar"
+          title={
+            prefs().sidebarCollapsed ? t("titlebar.showSidebar") : t("titlebar.hideSidebar")
+          }
+          aria-label={t("titlebar.toggleSidebar")}
           onClick={toggleSidebar}
         >
           <IconPanelLeft />

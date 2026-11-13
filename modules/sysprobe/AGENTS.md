@@ -1,14 +1,14 @@
-# Native module macos
+# Native module sysprobe
 
-macos is a native module of MyGo: Go interfaces implemented in Swift, Rust or
+sysprobe is a native module of MyGo: Go interfaces implemented in Swift, Rust or
 Zig. Read https://mygo.dev/docs/native-modules (docs/native-modules.md)
 before changing it.
 
-- `macos.go` declares the interfaces, the types they use and the errors
+- `sysprobe.go` declares the interfaces, the types they use and the errors
   (`native.NewError`): it is the contract. `//mygo:native` marks an entry point,
   which gets a constructor, `NewT`.
-- `macos_native.go` and each language's generated file
-  (`swift/Sources/Macos/Macos.mygo.swift`, `rust/src/mygo.rs`,
+- `sysprobe_native.go` and each language's generated file
+  (`swift/Sources/Sysprobe/Sysprobe.mygo.swift`, `rust/src/mygo.rs`,
   `zig/src/mygo.zig`) are generated: never edit them; `mygo dev`
   regenerates them when the interfaces change.
 - `swift/` is a Swift package, which macOS uses when it is there, for
@@ -23,5 +23,5 @@ Check the module without opening the app:
 
 ```sh
 mygo native check            # generate, build and vet: every problem as file:line
-mygo native call Greeter.Greet '{"name": "Ada"}'   # call a method, print its result
+mygo native call Probe.Snapshot '{}'   # call a method, print its result
 ```

@@ -1,14 +1,14 @@
-# Native module general
+# Native module hasher
 
-general is a native module of MyGo: Go interfaces implemented in Swift, Rust or
+hasher is a native module of MyGo: Go interfaces implemented in Swift, Rust or
 Zig. Read https://mygo.dev/docs/native-modules (docs/native-modules.md)
 before changing it.
 
-- `general.go` declares the interfaces, the types they use and the errors
+- `hasher.go` declares the interfaces, the types they use and the errors
   (`native.NewError`): it is the contract. `//mygo:native` marks an entry point,
   which gets a constructor, `NewT`.
-- `general_native.go` and each language's generated file
-  (`swift/Sources/General/General.mygo.swift`, `rust/src/mygo.rs`,
+- `hasher_native.go` and each language's generated file
+  (`swift/Sources/Hasher/Hasher.mygo.swift`, `rust/src/mygo.rs`,
   `zig/src/mygo.zig`) are generated: never edit them; `mygo dev`
   regenerates them when the interfaces change.
 - `swift/` is a Swift package, which macOS uses when it is there, for
@@ -23,5 +23,5 @@ Check the module without opening the app:
 
 ```sh
 mygo native check            # generate, build and vet: every problem as file:line
-mygo native call Greeter.Greet '{"name": "Ada"}'   # call a method, print its result
+mygo native call Hasher.Hash '{"data": "aGVsbG8=", "algorithm": "sha256"}'   # call a method, print its result
 ```

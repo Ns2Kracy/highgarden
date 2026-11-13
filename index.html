@@ -16,6 +16,7 @@
             (theme === "system" && matchMedia("(prefers-color-scheme: dark)").matches);
           document.documentElement.classList.toggle("dark", dark);
           if (prefs.accent) document.documentElement.dataset.accent = prefs.accent;
+          if (prefs.locale) document.documentElement.lang = prefs.locale;
         } catch {
           // Storage can be unavailable; the defaults apply.
         }

@@ -66,7 +66,7 @@ func TestPreferencesRoundTrip(t *testing.T) {
 		t.Fatalf("defaults = %+v", got)
 	}
 
-	want := Prefs{Theme: "dark", Accent: "violet", Recent: []string{"json", "hash"}, SidebarCollapsed: true}
+	want := Prefs{Theme: "dark", Accent: "violet", Locale: "zh-CN", Recent: []string{"json", "hash"}, SidebarCollapsed: true}
 	if err := p.Set(want); err != nil {
 		t.Fatal(err)
 	}
@@ -77,6 +77,9 @@ func TestPreferencesRoundTrip(t *testing.T) {
 	if got.Theme != want.Theme || got.Accent != want.Accent || got.SidebarCollapsed != want.SidebarCollapsed {
 		t.Fatalf("Get = %+v, want %+v", got, want)
 	}
+	if got.Locale != want.Locale {
+		t.Fatalf("Locale = %q, want %q", got.Locale, want.Locale)
+	}
 	if len(got.Recent) != 2 || got.Recent[0] != "json" || got.Recent[1] != "hash" {
 		t.Fatalf("Recent = %v", got.Recent)
 	}
@@ -86,10 +89,17 @@ func TestSanitize(t *testing.T) {
 	got := sanitize(Prefs{
 		Theme:  "neon",
 		Accent: "chartreuse",
+		Locale: "klingon",
 		Recent: []string{"json", "", "json", "hash"},
 	})
 	if got.Theme != defaultTheme || got.Accent != defaultAccent {
 		t.Fatalf("unknown values were kept: %+v", got)
+	}
+	if got.Locale != "" {
+		t.Fatalf("Locale = %q, want the system language", got.Locale)
+	}
+	if kept := sanitize(Prefs{Locale: "zh-CN"}); kept.Locale != "zh-CN" {
+		t.Fatalf("Locale = %q, want zh-CN", kept.Locale)
 	}
 	if len(got.Recent) != 2 || got.Recent[0] != "json" || got.Recent[1] != "hash" {
 		t.Fatalf("Recent = %v", got.Recent)

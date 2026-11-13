@@ -1,36 +1,34 @@
 import { isMyGo } from "mygo-runtime";
 import { createSignal } from "solid-js";
 import { Preferences, type Prefs } from "@/mygo";
+import { isLocale, locale, setLocale } from "./i18n";
 import { applyTheme, type ThemeMode } from "./theme";
 
 export const accents = [
-  { id: "blue", label: "Blue", swatch: "#2563eb" },
-  { id: "violet", label: "Violet", swatch: "#7c3aed" },
-  { id: "emerald", label: "Emerald", swatch: "#059669" },
-  { id: "amber", label: "Amber", swatch: "#d97706" },
-  { id: "rose", label: "Rose", swatch: "#e11d48" },
-  { id: "slate", label: "Slate", swatch: "#475569" },
+  { id: "blue", swatch: "#2563eb" },
+  { id: "violet", swatch: "#7c3aed" },
+  { id: "emerald", swatch: "#059669" },
+  { id: "amber", swatch: "#d97706" },
+  { id: "rose", swatch: "#e11d48" },
+  { id: "slate", swatch: "#475569" },
 ] as const;
 
-export const themes = [
-  { id: "system", label: "System" },
-  { id: "light", label: "Light" },
-  { id: "dark", label: "Dark" },
-] as const;
+export const themes: readonly ThemeMode[] = ["system", "light", "dark"];
 
 export type Accent = (typeof accents)[number]["id"];
 
 const STORAGE_KEY = "highgarden.preferences";
 const recentLimit = 8;
 
-const themeIds = themes.map((theme) => theme.id);
 const accentIds = accents.map((accent) => accent.id);
 
 function sanitize(input: Partial<Prefs> | null | undefined): Prefs {
-  const theme = themeIds.includes(input?.theme as ThemeMode)
+  const theme = themes.includes(input?.theme as ThemeMode)
     ? (input?.theme as ThemeMode)
     : "system";
   const accent = accentIds.includes(input?.accent as Accent) ? (input?.accent as Accent) : "blue";
+  // An unset or unknown locale keeps the language the system asks for.
+  const language = isLocale(input?.locale) ? input.locale : locale();
   const recent: string[] = [];
   for (const id of input?.recent ?? []) {
     if (typeof id === "string" && id && !recent.includes(id)) recent.push(id);
@@ -39,6 +37,7 @@ function sanitize(input: Partial<Prefs> | null | undefined): Prefs {
   return {
     theme,
     accent,
+    locale: language,
     recent,
     sidebarCollapsed: Boolean(input?.sidebarCollapsed),
   };
@@ -67,13 +66,19 @@ const [hydrated, setHydrated] = createSignal(false);
 /** The current preferences. Reading it in JSX keeps the view current. */
 export { prefs, hydrated };
 
+/** Applies the language of the preferences, when they name one we ship. */
+function applyLocale(next: Prefs): void {
+  if (isLocale(next.locale)) setLocale(next.locale);
+}
+
 let saveTimer: ReturnType<typeof setTimeout> | undefined;
 let started = false;
 
-/** Replaces the preferences, applies the theme and saves them. */
+/** Replaces the preferences, applies the theme and language, and saves them. */
 export function updatePreferences(patch: Partial<Prefs>): void {
   const next = sanitize({ ...prefs(), ...patch });
   setPrefs(next);
+  applyLocale(next);
   applyTheme(next.theme as ThemeMode, next.accent);
   writeLocal(next);
   if (!isMyGo()) return;
@@ -98,12 +103,14 @@ export function toggleSidebar(): void {
 
 /**
  * Loads the preferences from Go and applies them. Call once at startup:
- * until it resolves the local mirror from index.html keeps the right theme.
+ * until it resolves the local mirror from index.html keeps the right theme,
+ * and the detected language keeps the right words.
  */
 export function startPreferences(): void {
   if (started) return;
   started = true;
   const local = prefs();
+  applyLocale(local);
   applyTheme(local.theme as ThemeMode, local.accent);
 
   if (!isMyGo()) {
@@ -115,6 +122,7 @@ export function startPreferences(): void {
     .then((stored) => {
       const next = sanitize(stored);
       setPrefs(next);
+      applyLocale(next);
       applyTheme(next.theme as ThemeMode, next.accent);
       writeLocal(next);
     })

@@ -67,6 +67,11 @@ export interface Prefs {
   theme: string;
   /** Accent names the accent color preset. */
   accent: string;
+  /**
+   * Locale is the interface language, "en" or "zh-CN". Empty means the
+   * frontend renders the language the system asks for.
+   */
+  locale: string;
   /** Recent holds the ids of the tools opened last, newest first. */
   recent: string[];
   /** Sidebar remembers whether the sidebar is collapsed. */

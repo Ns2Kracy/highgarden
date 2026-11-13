@@ -21,6 +21,9 @@ type Prefs struct {
 	Theme string `json:"theme"`
 	// Accent names the accent color preset.
 	Accent string `json:"accent"`
+	// Locale is the interface language, "en" or "zh-CN". Empty means the
+	// frontend renders the language the system asks for.
+	Locale string `json:"locale"`
 	// Recent holds the ids of the tools opened last, newest first.
 	Recent []string `json:"recent"`
 	// Sidebar remembers whether the sidebar is collapsed.
@@ -35,6 +38,7 @@ const (
 
 var themes = []string{"system", "light", "dark"}
 var accents = []string{"blue", "violet", "emerald", "amber", "rose", "slate"}
+var locales = []string{"en", "zh-CN"}
 
 // Preferences reads and writes the user's preferences in a JSON file in the
 // app's user data directory. It is safe for concurrent use.
@@ -108,6 +112,9 @@ func sanitize(in Prefs) Prefs {
 	}
 	if slices.Contains(accents, in.Accent) {
 		out.Accent = in.Accent
+	}
+	if slices.Contains(locales, in.Locale) {
+		out.Locale = in.Locale
 	}
 	seen := make(map[string]bool, len(in.Recent))
 	for _, id := range in.Recent {

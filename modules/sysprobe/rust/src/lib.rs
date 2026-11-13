@@ -20,11 +20,15 @@ impl Probe for NativeProbe {
     fn snapshot(&self, ctx: &Context) -> Result<Snapshot, Error> {
         ctx.check()?;
 
-        // CPU usage is a difference: take one sample, wait, take another.
         let mut sys = sysinfo::System::new_all()
             .map_err(|e| Error::other(format!("read system: {e}")))?;
-        ctx.sleep(sysinfo::MINIMUM_CPU_UPDATE_INTERVAL)?;
-        sys.refresh_cpu_usage();
+        // Windows' PDH counters under-report on some builds; Go samples
+        // GetSystemTimes for the overview instead. Elsewhere sysinfo does it.
+        #[cfg(not(windows))]
+        {
+            ctx.sleep(sysinfo::MINIMUM_CPU_UPDATE_INTERVAL)?;
+            sys.refresh_cpu_usage();
+        }
         sys.refresh_memory();
         sys.refresh_processes(sysinfo::ProcessesToUpdate::All, true);
         ctx.check()?;
@@ -67,7 +71,16 @@ impl Probe for NativeProbe {
                 .map(|cpu| text(cpu.brand()).trim().to_string())
                 .unwrap_or_default(),
             cpu_cores: sys.cpus().len() as i64,
-            cpu_usage: sys.global_cpu_usage() as f64,
+            cpu_usage: {
+                #[cfg(windows)]
+                {
+                    0.0
+                }
+                #[cfg(not(windows))]
+                {
+                    sys.global_cpu_usage() as f64
+                }
+            },
             memory_total: sys.total_memory(),
             memory_used: sys.used_memory(),
             swap_total: sys.total_swap(),

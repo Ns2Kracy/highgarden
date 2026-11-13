@@ -4,27 +4,275 @@ import { call, event } from "mygo-runtime";
 
 // ---- Types ----
 
-/** SystemInfo describes the machine the app runs on. */
+/** CleanResult is what a clean freed, and what it could not. */
+export interface CleanResult {
+  freed: number;
+  files: number;
+  skipped: number;
+  errors: string[];
+}
+
+/** CleanTarget is a place the cleaner can empty, with what it measured. */
+export interface CleanTarget {
+  id: string;
+  name: string;
+  detail: string;
+  path: string;
+  /** "folder" or "files" */
+  kind: string;
+  size: number;
+  files: number;
+  needsAdmin: boolean;
+  available: boolean;
+}
+
+export interface Device {
+  id: string;
+  name: string;
+  class: string;
+  manufacturer: string;
+  status: string;
+  errorCode: number;
+  driverVersion: string;
+}
+
+export interface Disk {
+  name: string;
+  mountPoint: string;
+  fileSystem: string;
+  total: number;
+  available: number;
+  removable: boolean;
+}
+
+/** InstalledApp is a program the system knows how to uninstall. */
+export interface InstalledApp {
+  id: string;
+  name: string;
+  version: string;
+  publisher: string;
+  installLocation: string;
+  uninstallCommand: string;
+  sizeBytes: number;
+  installDate: string;
+  /** Scope is "machine" or "user": where the entry lives. */
+  scope: string;
+  /** NeedsAdmin is set for machine-wide entries. */
+  needsAdmin: boolean;
+}
+
+/** Prefs is what the frontend persists between launches. */
+export interface Prefs {
+  /** Theme is "system", "light" or "dark". */
+  theme: string;
+  /** Accent names the accent color preset. */
+  accent: string;
+  /** Recent holds the ids of the tools opened last, newest first. */
+  recent: string[];
+  /** Sidebar remembers whether the sidebar is collapsed. */
+  sidebarCollapsed: boolean;
+}
+
+export interface Process {
+  pid: number;
+  name: string;
+  memory: number;
+  cpu: number;
+}
+
+export interface Snapshot {
+  hostname: string;
+  osName: string;
+  osVersion: string;
+  kernelVersion: string;
+  cpuName: string;
+  cpuCores: number;
+  cpuUsage: number;
+  memoryTotal: number;
+  memoryUsed: number;
+  swapTotal: number;
+  swapUsed: number;
+  uptimeSeconds: number;
+  processCount: number;
+  disks: Disk[];
+  processes: Process[];
+  batteryPercent: number;
+  batteryCharging: boolean;
+}
+
+/** StartupItem is a program the system launches when a user signs in. */
+export interface StartupItem {
+  id: string;
+  name: string;
+  command: string;
+  location: string;
+  /** Scope is "machine" or "user". */
+  scope: string;
+  /** Enabled is false for entries this app disabled, which stay listed. */
+  enabled: boolean;
+  /** CanToggle is false for entries this app cannot safely move. */
+  canToggle: boolean;
+  needsAdmin: boolean;
+}
+
+/** SystemInfo describes the app and the machine it runs on. */
 export interface SystemInfo {
   os: string;
   arch: string;
   goVersion: string;
+  hostname: string;
+  numCPU: number;
+  engine: string;
+  appVersion: string;
+  packaged: boolean;
+  elevated: boolean;
+  dataDir: string;
 }
 
 // ---- Services ----
 
 /**
- * Greeter is callable from the frontend: `mygo generate` turns its methods
- * into typed TypeScript functions in src/mygo.ts.
+ * Preferences reads and writes the user's preferences in a JSON file in the
+ * app's user data directory. It is safe for concurrent use.
  */
-export const Greeter = {
-  /** Greet returns a greeting for name. */
-  greet(name: string): Promise<string> {
-    return call("Greeter.Greet", name);
+export const Preferences = {
+  /** Get returns the stored preferences, or their defaults. */
+  get(): Promise<Prefs> {
+    return call("Preferences.Get");
   },
-  /** Info returns information about the system. */
+  /** Set validates and stores the preferences. */
+  set(prefs: Prefs): Promise<void> {
+    return call("Preferences.Set", prefs);
+  },
+} as const;
+
+/**
+ * Digest hashes text and files. It uses the Rust module when it loaded and
+ * falls back to Go's crypto package otherwise.
+ */
+export const Digest = {
+  /** Available reports whether the Rust implementation is loaded. */
+  available(): Promise<boolean> {
+    return call("Digest.Available");
+  },
+  /** Engine names what hashes: "rust" or "go". */
+  engine(): Promise<string> {
+    return call("Digest.Engine");
+  },
+  /** File returns the hex digest of the file at path. ctx cancels reading. */
+  file(algorithm: string, path: string): Promise<string> {
+    return call("Digest.File", algorithm, path);
+  },
+  /** Text returns the hex digest of text. */
+  text(algorithm: string, text: string): Promise<string> {
+    return call("Digest.Text", algorithm, text);
+  },
+} as const;
+
+/**
+ * System reports information about the app and the machine, reads live
+ * snapshots through the native module and opens the system's own pages.
+ */
+export const System = {
+  /** Devices lists the Plug and Play devices that are present. */
+  devices(): Promise<Device[]> {
+    return call("System.Devices");
+  },
+  /** Info describes the app and the machine. */
   info(): Promise<SystemInfo> {
-    return call("Greeter.Info");
+    return call("System.Info");
+  },
+  /** OpenDataDir shows the app's user data directory in the file manager. */
+  openDataDir(): Promise<void> {
+    return call("System.OpenDataDir");
+  },
+  /**
+   * OpenPage opens one of the system's own settings pages or tools. It only
+   * accepts the names in systemPages, never a path from the page.
+   */
+  openPage(name: string): Promise<void> {
+    return call("System.OpenPage", name);
+  },
+  /**
+   * Overview returns a live snapshot of the machine: CPU, memory, disks,
+   * uptime and the processes using the most memory.
+   */
+  overview(): Promise<Snapshot> {
+    return call("System.Overview");
+  },
+} as const;
+
+/** Files opens, reads and writes the text files a tool works on. */
+export const Files = {
+  /**
+   * Pick asks for a file to open and returns its path, or "" when the user
+   * cancels.
+   */
+  pick(): Promise<string> {
+    return call("Files.Pick");
+  },
+  /** ReadText returns the contents of a UTF-8 text file. */
+  readText(path: string): Promise<string> {
+    return call("Files.ReadText", path);
+  },
+  /**
+   * SaveText asks where to save content and writes it there. It returns the
+   * chosen path, or "" when the user cancels.
+   */
+  saveText(defaultName: string, content: string): Promise<string> {
+    return call("Files.SaveText", defaultName, content);
+  },
+} as const;
+
+/**
+ * Apps lists installed programs and runs their uninstallers. The page shows
+ * the exact command before asking Go to run it.
+ */
+export const Apps = {
+  /** List returns the programs registered in the uninstall registry keys. */
+  list(): Promise<InstalledApp[]> {
+    return call("Apps.List");
+  },
+  /**
+   * Uninstall runs the uninstaller of id and returns what it printed. The
+   * uninstaller may open its own window and return before it finishes.
+   */
+  uninstall(id: string): Promise<string> {
+    return call("Apps.Uninstall", id);
+  },
+} as const;
+
+/**
+ * Cleaner measures and empties a fixed list of caches. It never deletes
+ * anywhere else, never follows a symbolic link, and leaves the folders
+ * themselves in place.
+ */
+export const Cleaner = {
+  /** Clean empties the chosen targets. IDs outside the fixed list are ignored. */
+  clean(ids: string[]): Promise<CleanResult> {
+    return call("Cleaner.Clean", ids);
+  },
+  /** Scan measures every target. Sorting and totals happen in the page. */
+  scan(): Promise<CleanTarget[]> {
+    return call("Cleaner.Scan");
+  },
+} as const;
+
+/**
+ * Startup lists and toggles the entries of the Run registry keys and the
+ * Startup folders. Disabled entries are moved aside, not deleted.
+ */
+export const Startup = {
+  /** List returns enabled and disabled startup entries. */
+  list(): Promise<StartupItem[]> {
+    return call("Startup.List");
+  },
+  /**
+   * SetEnabled enables or disables an entry, moving it between its Run key and
+   * this app's backup key, or renaming a Startup folder entry.
+   */
+  setEnabled(id: string, enabled: boolean): Promise<void> {
+    return call("Startup.SetEnabled", id, enabled);
   },
 } as const;
 
@@ -32,6 +280,6 @@ export const Greeter = {
 
 /** Events sent by the Go side. Subscribe with `events.name.on(listener)`. */
 export const events = {
-  /** Tick is sent to the page every second. */
+  /** Tick is sent to the page every second, for the status bar clock. */
   tick: event<string>("tick"),
 } as const;

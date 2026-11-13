@@ -1,6 +1,10 @@
 import { defineConfig } from "vite";
+import solid from "@solidjs/vite-plugin";
 
 export default defineConfig({
+  plugins: [
+    solid({ diagnostics: true }), // add `ssr: true` for streaming SSR
+  ],
   server: {
     // The app loads this address during `mygo dev` (devUrl in mygo.json).
     port: 5173,

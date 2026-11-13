@@ -51,7 +51,7 @@ then Zig.
      of a struct with a `pub fn` per method, taking `arena: Allocator`
      after `self`. Results may live in the arena; what outlives the call
      uses `mygo.allocator` and is freed in `deinit`.
-   The compiler names any method missing.
+     The compiler names any method missing.
 4. Try a method without the app:
    `mygo native call [dir] <Interface>.<Method> '{"param": value}'`
    prints the result as JSON, a line per value of a stream, and the calls

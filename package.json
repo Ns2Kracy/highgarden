@@ -8,18 +8,38 @@
     "generate": "mygo generate",
     "dev:web": "vite",
     "build:web": "tsc --noEmit && vite build",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "bun test",
+    "lint": "oxlint",
+    "lint:fix": "oxlint --fix",
+    "fmt": "oxfmt",
+    "fmt:check": "oxfmt --check"
   },
   "dependencies": {
     "@mygo-plugins/fetch": "^0.9.0",
     "@mygo-plugins/sqlite": "^0.9.0",
     "@mygo-plugins/watch": "^0.9.0",
     "@mygo-plugins/websocket": "^0.9.0",
+    "@solidjs/web": "^2.0.0-rc.21",
+    "@tanstack/form-core": "4.0.2",
+    "@tanstack/solid-query": "6.0.0-rc.5",
+    "@tanstack/solid-router": "2.0.0-rc.10",
+    "@tanstack/table-core": "9.3.1",
+    "@tanstack/virtual-core": "3.19.11",
     "effect": "^4.1.4",
-    "mygo-runtime": "^0.9.0"
+    "mygo-runtime": "^0.9.0",
+    "solid-js": "^2.0.0-rc.21"
   },
   "devDependencies": {
+    "@solidjs/diagnostics": "^2.0.0-rc.21",
+    "@solidjs/vite-plugin": "^3.0.0-next.57",
+    "@tanstack/solid-query-devtools": "6.0.0-rc.5",
+    "@tanstack/solid-router-devtools": "2.0.0-rc.8",
+    "@types/bun": "1.4.4",
+    "eslint-plugin-solid": "^0.19.0",
     "mygo-cli": "^0.9.0",
+    "oxfmt": "^0.78.0",
+    "oxlint": "^1.93.0",
     "typescript": "^7",
     "vite": "^8"
   }

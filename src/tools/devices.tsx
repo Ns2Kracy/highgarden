@@ -5,6 +5,7 @@ import { IconBluetooth, IconExternal, IconKeyboard, IconMonitor, IconRefresh, Ic
 import { Badge, Button, Card, CardBody, Field, Input, Spinner } from "@/components/ui";
 import { System, type Device } from "@/mygo";
 import { cn } from "@/lib/cn";
+import { t } from "@/lib/i18n";
 
 function DeviceIcon(props: { device: Device }) {
   const icon = createMemo(() => {
@@ -32,7 +33,7 @@ export default function DevicesTool() {
   const classes = createMemo(() => {
     const counts = new Map<string, number>();
     for (const device of devices.data ?? []) {
-      const name = device.class || "Other";
+      const name = device.class || t("tools.devices.other");
       counts.set(name, (counts.get(name) ?? 0) + 1);
     }
     return [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
@@ -41,7 +42,8 @@ export default function DevicesTool() {
   const visible = createMemo(() => {
     const needle = query().trim().toLowerCase();
     return (devices.data ?? []).filter((device) => {
-      if (deviceClass() !== "all" && (device.class || "Other") !== deviceClass()) return false;
+      const deviceClassOf = (value: Device) => value.class || t("tools.devices.other");
+      if (deviceClass() !== "all" && deviceClassOf(device) !== deviceClass()) return false;
       if (problems() && device.errorCode === 0) return false;
       if (!needle) return true;
       return (
@@ -58,26 +60,26 @@ export default function DevicesTool() {
   return (
     <div class="flex flex-col gap-4">
       <div class="flex flex-wrap items-end gap-3">
-        <Field label="Search" class="min-w-56 flex-1">
+        <Field label={t("common.search")} class="min-w-56 flex-1">
           <Input
             value={query()}
             onInput={(event) => setQuery(event.currentTarget.value)}
-            placeholder="Device, manufacturer, class or instance ID…"
-            aria-label="Search devices"
+            placeholder={t("tools.devices.searchPlaceholder")}
+            aria-label={t("tools.devices.searchLabel")}
           />
         </Field>
         <div class="flex items-center gap-2 pb-0.5">
           <Button variant="ghost" onClick={() => void devices.refetch()} disabled={devices.isFetching}>
             <IconRefresh class={devices.isFetching ? "size-3.5 animate-spin" : "size-3.5"} />
-            Refresh
+            {t("common.refresh")}
           </Button>
           <Button variant="ghost" onClick={() => void System.openPage("devices")}>
             <IconExternal class="size-3.5" />
-            Device Manager
+            {t("tools.devices.deviceManager")}
           </Button>
           <Button variant="ghost" onClick={() => void System.openPage("bluetooth")}>
             <IconBluetooth class="size-3.5" />
-            Bluetooth
+            {t("tools.devices.bluetooth")}
           </Button>
         </div>
       </div>
@@ -93,7 +95,7 @@ export default function DevicesTool() {
           )}
           onClick={() => setDeviceClass("all")}
         >
-          All devices
+          {t("tools.devices.allDevices")}
           <span class="ml-1 text-faint">{devices.data?.length ?? 0}</span>
         </button>
         <For each={classes().slice(0, 12)}>
@@ -123,7 +125,7 @@ export default function DevicesTool() {
           )}
           onClick={() => setProblems((value) => !value)}
         >
-          Problems only
+          {t("tools.devices.problemsOnly")}
           <span class="ml-1 text-faint">{problemCount()}</span>
         </button>
       </div>
@@ -136,7 +138,7 @@ export default function DevicesTool() {
             <span>
               {devices.error instanceof Error
                 ? devices.error.message
-                : "Could not read the device list."}
+                : t("tools.devices.readError")}
             </span>
           </div>
         }
@@ -147,7 +149,7 @@ export default function DevicesTool() {
               when={!devices.isPending}
               fallback={
                 <div class="flex items-center gap-2 px-4 py-8 text-sm text-muted">
-                  <Spinner /> Asking Windows for its devices…
+                  <Spinner /> {t("tools.devices.reading")}
                 </div>
               }
             >
@@ -162,24 +164,29 @@ export default function DevicesTool() {
                         <div class="flex flex-wrap items-center gap-2">
                           <span class="truncate text-sm font-medium text-fg">{device.name}</span>
                           <Badge tone="neutral" class="px-1.5 py-0 text-[10px]">
-                            {device.class || "Other"}
+                            {device.class || t("tools.devices.other")}
                           </Badge>
                           <Show when={device.errorCode !== 0}>
                             <Badge tone="warning" class="px-1.5 py-0 text-[10px]">
-                              Problem {device.errorCode}
+                              {t("tools.devices.problem", { code: device.errorCode })}
                             </Badge>
                           </Show>
                         </div>
                         <p class="truncate text-[11px] text-muted">
-                          {device.manufacturer || "Unknown manufacturer"}
+                          {device.manufacturer || t("tools.devices.unknownManufacturer")}
                           <Show when={device.driverVersion}>
-                            <span class="text-faint"> · driver {device.driverVersion}</span>
+                            <span class="text-faint">
+                              {t("tools.devices.driver", { version: device.driverVersion })}
+                            </span>
                           </Show>
                         </p>
                         <p class="truncate font-mono text-[10px] text-faint">{device.id}</p>
                       </div>
                       <Badge tone={device.errorCode === 0 ? "success" : "warning"} class="shrink-0">
-                        {device.status || (device.errorCode === 0 ? "OK" : "Problem")}
+                        {device.status ||
+                          (device.errorCode === 0
+                            ? t("tools.devices.ok")
+                            : t("tools.devices.problemFallback"))}
                       </Badge>
                     </li>
                   )}
@@ -187,7 +194,7 @@ export default function DevicesTool() {
               </ul>
               <Show when={visible().length === 0}>
                 <p class="px-4 py-10 text-center text-sm text-muted">
-                  No device matches that filter.
+                  {t("tools.devices.noMatch")}
                 </p>
               </Show>
             </Show>
@@ -196,8 +203,7 @@ export default function DevicesTool() {
       </Show>
 
       <p class="text-[11px] leading-relaxed text-faint">
-        The list comes from Windows' Plug and Play database through the Rust sysprobe module.
-        Devices with a problem code are the ones Device Manager marks with a warning.
+        {t("tools.devices.footer")}
       </p>
     </div>
   );

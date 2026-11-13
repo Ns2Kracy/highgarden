@@ -14,7 +14,18 @@ import {
 import { cn } from "@/lib/cn";
 import { Cleaner, type CleanResult, type CleanTarget } from "@/mygo";
 import { formatBytes } from "@/lib/encoding";
+import { hasMessage, t, type MessageKey } from "@/lib/i18n";
 import { systemInfo } from "@/lib/system";
+
+/**
+ * The name or detail of a target in the current language. The Go service
+ * names its own targets; the catalogs name them again by id, and a target the
+ * catalogs do not know keeps the Go text.
+ */
+function targetText(target: CleanTarget, field: "name" | "detail"): string {
+  const key = `tools.cleaner.targets.${target.id}.${field}`;
+  return hasMessage(key) ? t(key as MessageKey) : target[field];
+}
 
 export default function CleanerTool() {
   const info = useQuery(() => ({ queryKey: ["system-info"], queryFn: systemInfo }));
@@ -102,19 +113,22 @@ export default function CleanerTool() {
           <Show when={scan.isFetching} fallback={<IconRefresh class="size-3.5" />}>
             <Spinner class="size-3.5" />
           </Show>
-          Scan again
+          {t("tools.cleaner.scanAgain")}
         </Button>
         <Button variant="ghost" onClick={toggleAll} disabled={targets().length === 0 || cleaning()}>
-          {allSelected() ? "Select none" : "Select all"}
+          {allSelected() ? t("tools.cleaner.selectNone") : t("tools.cleaner.selectAll")}
         </Button>
         <span class="text-xs text-muted">
-          {formatBytes(totalSize())} reclaimable · {formatBytes(selectedSize())} selected
+          {t("tools.cleaner.totals", {
+            reclaimable: formatBytes(totalSize()),
+            selected: formatBytes(selectedSize()),
+          })}
         </span>
         <div class="ml-auto flex items-center gap-2">
           <Show when={!elevated()}>
             <Badge tone="warning">
               <IconShield class="size-3" />
-              Some targets need administrator
+              {t("tools.cleaner.someNeedAdmin")}
             </Badge>
           </Show>
           <Button
@@ -123,7 +137,7 @@ export default function CleanerTool() {
             disabled={selected().length === 0 || cleaning()}
           >
             <IconTrash class="size-3.5" />
-            Clean selected
+            {t("tools.cleaner.cleanSelected")}
           </Button>
         </div>
       </div>
@@ -134,7 +148,9 @@ export default function CleanerTool() {
           <div class="flex gap-2 rounded-xl border border-danger/25 bg-danger/10 px-4 py-3 text-xs text-danger">
             <IconWarning class="mt-0.5 size-3.5 shrink-0" />
             <span>
-              {scan.error instanceof Error ? scan.error.message : "Could not scan for files."}
+              {scan.error instanceof Error
+                ? scan.error.message
+                : t("tools.cleaner.scanError")}
             </span>
           </div>
         }
@@ -162,25 +178,31 @@ export default function CleanerTool() {
                   />
                   <div class="min-w-0 flex-1">
                     <div class="flex items-start justify-between gap-2">
-                      <span class="text-sm font-medium text-fg">{target.name}</span>
+                      <span class="text-sm font-medium text-fg">{targetText(target, "name")}</span>
                       <span class="shrink-0 font-mono text-xs text-muted">
                         {target.available ? formatBytes(target.size) : "—"}
                       </span>
                     </div>
-                    <p class="mt-0.5 text-[11px] leading-relaxed text-muted">{target.detail}</p>
+                    <p class="mt-0.5 text-[11px] leading-relaxed text-muted">
+                      {targetText(target, "detail")}
+                    </p>
                     <p class="mt-1 break-all font-mono text-[10px] text-faint">{target.path}</p>
                     <div class="mt-1.5 flex flex-wrap gap-1.5">
                       <Show when={!target.available}>
-                        <Badge tone="neutral">Not found</Badge>
+                        <Badge tone="neutral">{t("tools.cleaner.notFound")}</Badge>
                       </Show>
                       <Show when={target.needsAdmin}>
                         <Badge tone={elevated() ? "success" : "warning"}>
                           <IconShield class="size-3" />
-                          {elevated() ? "Administrator" : "Needs administrator"}
+                          {elevated()
+                            ? t("common.administrator")
+                            : t("tools.cleaner.needsAdministrator")}
                         </Badge>
                       </Show>
                       <Show when={target.available && target.files > 0}>
-                        <Badge tone="neutral">{target.files} files</Badge>
+                        <Badge tone="neutral">
+                          {t("tools.cleaner.files", { count: target.files })}
+                        </Badge>
                       </Show>
                     </div>
                   </div>
@@ -192,7 +214,7 @@ export default function CleanerTool() {
       </Show>
 
       <Show when={targets().length === 0 && !scan.isFetching && !scan.isError}>
-        <p class="py-8 text-center text-sm text-muted">Nothing to measure on this system.</p>
+        <p class="py-8 text-center text-sm text-muted">{t("tools.cleaner.nothingToMeasure")}</p>
       </Show>
 
       <Show when={result()}>
@@ -201,23 +223,25 @@ export default function CleanerTool() {
             <CardHeader>
               <CardTitle class="flex items-center gap-2">
                 <IconTrash class="size-4 text-success" />
-                Cleaned {formatBytes(cleaned().freed)}
+                {t("tools.cleaner.cleaned", { size: formatBytes(cleaned().freed) })}
               </CardTitle>
               <Badge tone={cleaned().errors.length ? "warning" : "success"}>
-                {cleaned().files} files removed
+                {t("tools.cleaner.filesRemoved", { count: cleaned().files })}
               </Badge>
             </CardHeader>
             <CardBody class="flex flex-col gap-2">
               <Show when={cleaned().skipped > 0}>
                 <p class="text-xs text-muted">
-                  {cleaned().skipped} entries were skipped because they are symbolic links or still in use.
+                  {t("tools.cleaner.skipped", { count: cleaned().skipped })}
                 </p>
               </Show>
               <For each={cleaned().errors.slice(0, 6)}>
                 {(message) => <p class="break-all font-mono text-[11px] text-warning">{message}</p>}
               </For>
               <Show when={cleaned().errors.length > 6}>
-                <p class="text-xs text-faint">…and {cleaned().errors.length - 6} more.</p>
+                <p class="text-xs text-faint">
+                  {t("tools.cleaner.more", { count: cleaned().errors.length - 6 })}
+                </p>
               </Show>
             </CardBody>
           </Card>
@@ -234,15 +258,14 @@ export default function CleanerTool() {
       </Show>
 
       <p class="text-[11px] leading-relaxed text-faint">
-        The cleaner only touches the folders listed here, leaves the folders themselves, and
-        never follows a symbolic link. Deletion is permanent.
+        {t("tools.cleaner.footer")}
       </p>
 
       <ConfirmDialog
         open={confirming()}
-        title={`Delete ${formatBytes(selectedSize())}?`}
-        description="These files are deleted permanently. Open files and symbolic links are skipped."
-        confirmLabel="Delete files"
+        title={t("tools.cleaner.confirmTitle", { size: formatBytes(selectedSize()) })}
+        description={t("tools.cleaner.confirmBody")}
+        confirmLabel={t("tools.cleaner.confirmLabel")}
         danger
         busy={cleaning()}
         onCancel={() => setConfirming(false)}
@@ -252,7 +275,7 @@ export default function CleanerTool() {
           <For each={selectedTargets()}>
             {(target) => (
               <li class="flex items-center justify-between gap-2 px-3 py-2 text-xs">
-                <span class="truncate text-fg">{target.name}</span>
+                <span class="truncate text-fg">{targetText(target, "name")}</span>
                 <span class="shrink-0 font-mono text-faint">{formatBytes(target.size)}</span>
               </li>
             )}

@@ -16,6 +16,7 @@ import {
 } from "@/components/ui";
 import { Apps, System, type InstalledApp } from "@/mygo";
 import { formatBytes } from "@/lib/encoding";
+import { t } from "@/lib/i18n";
 
 type Sort = "name" | "size" | "date";
 
@@ -65,7 +66,7 @@ export default function AppsTool() {
     setError(null);
     try {
       const text = await Apps.uninstall(app.id);
-      setOutput(text || "The uninstaller finished without output.");
+      setOutput(text || t("tools.apps.noOutput"));
       await apps.refetch();
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
@@ -77,51 +78,54 @@ export default function AppsTool() {
   return (
     <div class="flex flex-col gap-4">
       <div class="flex flex-wrap items-end gap-3">
-        <Field label="Search" class="min-w-56 flex-1">
+        <Field label={t("common.search")} class="min-w-56 flex-1">
           <Input
             value={query()}
             onInput={(event) => setQuery(event.currentTarget.value)}
-            placeholder="Program, publisher or folder…"
-            aria-label="Search installed programs"
+            placeholder={t("tools.apps.searchPlaceholder")}
+            aria-label={t("tools.apps.searchLabel")}
           />
         </Field>
-        <Field label="Scope" class="w-36">
+        <Field label={t("tools.apps.scope")} class="w-36">
           <Select value={scope()} onChange={(event) => setScope(event.currentTarget.value)}>
-            <option value="all">All programs</option>
-            <option value="machine">For everyone</option>
-            <option value="user">For me</option>
+            <option value="all">{t("tools.apps.allPrograms")}</option>
+            <option value="machine">{t("tools.apps.forEveryone")}</option>
+            <option value="user">{t("tools.apps.forMe")}</option>
           </Select>
         </Field>
-        <Field label="Sort" class="w-36">
+        <Field label={t("tools.apps.sort")} class="w-36">
           <Select
             value={sort()}
             onChange={(event) => setSort(event.currentTarget.value as Sort)}
           >
-            <option value="name">By name</option>
-            <option value="size">By size</option>
-            <option value="date">By install date</option>
+            <option value="name">{t("tools.apps.byName")}</option>
+            <option value="size">{t("tools.apps.bySize")}</option>
+            <option value="date">{t("tools.apps.byDate")}</option>
           </Select>
         </Field>
         <div class="flex items-center gap-2 pb-0.5">
           <Button variant="ghost" onClick={() => void apps.refetch()} disabled={apps.isFetching}>
             <IconRefresh class={apps.isFetching ? "size-3.5 animate-spin" : "size-3.5"} />
-            Refresh
+            {t("common.refresh")}
           </Button>
           <Button variant="ghost" onClick={() => void System.openPage("apps")}>
             <IconExternal class="size-3.5" />
-            Windows Apps
+            {t("tools.apps.windowsApps")}
           </Button>
         </div>
       </div>
 
       <div class="flex flex-wrap items-center gap-2 text-xs text-muted">
-        <span>{visible().length} programs</span>
+        <span>{t("tools.apps.programs", { count: visible().length })}</span>
         <span class="text-border-strong">/</span>
         <span>
-          {formatBytes(totalSize())} across {withSize()} entries that report a size
+          {t("tools.apps.totals", {
+            size: formatBytes(totalSize()),
+            count: withSize(),
+          })}
         </span>
         <Badge tone="neutral" class="ml-auto">
-          Uninstallers are Windows' own
+          {t("tools.apps.ownUninstallers")}
         </Badge>
       </div>
 
@@ -133,7 +137,7 @@ export default function AppsTool() {
             <span>
               {apps.error instanceof Error
                 ? apps.error.message
-                : "Could not read the uninstall registry keys."}
+                : t("tools.apps.readError")}
             </span>
           </div>
         }
@@ -144,7 +148,7 @@ export default function AppsTool() {
               when={!apps.isPending}
               fallback={
                 <div class="flex items-center gap-2 px-4 py-8 text-sm text-muted">
-                  <Spinner /> Reading installed programs…
+                  <Spinner /> {t("tools.apps.reading")}
                 </div>
               }
             >
@@ -164,12 +168,12 @@ export default function AppsTool() {
                           <Show when={app.needsAdmin}>
                             <Badge tone="neutral" class="px-1.5 py-0 text-[10px]">
                               <IconShield class="size-3" />
-                              machine
+                              {t("tools.apps.machine")}
                             </Badge>
                           </Show>
                         </div>
                         <p class="mt-0.5 truncate text-xs text-muted">
-                          {app.publisher || "Unknown publisher"}
+                          {app.publisher || t("tools.apps.unknownPublisher")}
                           <Show when={app.installLocation}>
                             <span class="text-faint"> · {app.installLocation}</span>
                           </Show>
@@ -182,13 +186,13 @@ export default function AppsTool() {
                         size="sm"
                         variant="danger"
                         disabled={!app.uninstallCommand || pending() === app.id}
-                        title={app.uninstallCommand || "This entry has no uninstall command"}
+                        title={app.uninstallCommand || t("tools.apps.noUninstall")}
                         onClick={() => setConfirming(app)}
                       >
                         <Show when={pending() === app.id} fallback={<IconTrash class="size-3.5" />}>
                           <Spinner class="size-3.5" />
                         </Show>
-                        Uninstall
+                        {t("tools.apps.uninstall")}
                       </Button>
                     </li>
                   )}
@@ -196,7 +200,7 @@ export default function AppsTool() {
               </ul>
               <Show when={visible().length === 0}>
                 <p class="px-4 py-10 text-center text-sm text-muted">
-                  No program matches that search.
+                  {t("tools.apps.noMatch")}
                 </p>
               </Show>
             </Show>
@@ -217,9 +221,9 @@ export default function AppsTool() {
         {(text) => (
           <Card>
             <CardHeader>
-              <CardTitle>Uninstaller output</CardTitle>
+              <CardTitle>{t("tools.apps.uninstallerOutput")}</CardTitle>
               <Button size="sm" variant="ghost" onClick={() => setOutput(null)}>
-                Dismiss
+                {t("tools.apps.dismiss")}
               </Button>
             </CardHeader>
             <CardBody>
@@ -232,15 +236,14 @@ export default function AppsTool() {
       </Show>
 
       <p class="text-[11px] leading-relaxed text-faint">
-        This list comes from the uninstall keys of the registry. The uninstaller itself is the
-        program's own; it may ask for administrator rights or open a window of its own.
+        {t("tools.apps.footer")}
       </p>
 
       <ConfirmDialog
         open={confirming() !== null}
-        title={`Uninstall ${confirming()?.name ?? ""}?`}
-        description="Highgarden runs the program's registered uninstall command. The program then decides what to remove."
-        confirmLabel="Run uninstaller"
+        title={t("tools.apps.confirmTitle", { name: confirming()?.name ?? "" })}
+        description={t("tools.apps.confirmBody")}
+        confirmLabel={t("tools.apps.confirmLabel")}
         danger
         busy={pending() !== null}
         onCancel={() => setConfirming(null)}
@@ -250,19 +253,25 @@ export default function AppsTool() {
           {(app) => (
             <div class="flex flex-col gap-2">
               <div class="grid grid-cols-[6rem_1fr] gap-x-3 gap-y-1 text-xs">
-                <span class="text-muted">Publisher</span>
-                <span class="truncate text-fg">{app().publisher || "Unknown"}</span>
-                <span class="text-muted">Version</span>
-                <span class="truncate text-fg">{app().version || "Unknown"}</span>
-                <span class="text-muted">Location</span>
+                <span class="text-muted">{t("tools.apps.publisher")}</span>
+                <span class="truncate text-fg">
+                  {app().publisher || t("tools.apps.unknown")}
+                </span>
+                <span class="text-muted">{t("tools.apps.version")}</span>
+                <span class="truncate text-fg">
+                  {app().version || t("tools.apps.unknown")}
+                </span>
+                <span class="text-muted">{t("tools.apps.location")}</span>
                 <span class="truncate font-mono text-[11px] text-fg">
-                  {app().installLocation || "Not reported"}
+                  {app().installLocation || t("tools.apps.notReported")}
                 </span>
               </div>
               <div class="rounded-lg border border-border bg-surface-2 p-2.5">
-                <p class="mb-1 text-[10px] uppercase tracking-wide text-faint">Command</p>
+                <p class="mb-1 text-[10px] uppercase tracking-wide text-faint">
+                  {t("tools.apps.command")}
+                </p>
                 <p class="break-all font-mono text-[11px] text-fg">
-                  {app().uninstallCommand || "No uninstall command registered"}
+                  {app().uninstallCommand || t("tools.apps.noCommand")}
                 </p>
               </div>
             </div>

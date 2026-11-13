@@ -13,6 +13,7 @@ import {
 } from "@/components/ui";
 import { System } from "@/mygo";
 import { formatBytes } from "@/lib/encoding";
+import { t } from "@/lib/i18n";
 import { systemInfo } from "@/lib/system";
 
 function percent(used: number, total: number): number {
@@ -25,9 +26,9 @@ function uptime(seconds: number): string {
   const days = Math.floor(seconds / 86400);
   const hours = Math.floor((seconds % 86400) / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
-  if (days > 0) return `${days}d ${hours}h`;
-  if (hours > 0) return `${hours}h ${minutes}m`;
-  return `${minutes}m`;
+  if (days > 0) return t("tools.system.uptimeDays", { days, hours });
+  if (hours > 0) return t("tools.system.uptimeHours", { hours, minutes });
+  return t("tools.system.uptimeMinutes", { minutes });
 }
 
 function Meter(props: { value: number; tone?: "accent" | "warning" }) {
@@ -65,7 +66,7 @@ export default function SystemTool() {
                   {data().osName} {data().osVersion}
                 </span>
                 <span class="text-border-strong">/</span>
-                <span>up {uptime(data().uptimeSeconds)}</span>
+                <span>{t("tools.system.uptime", { duration: uptime(data().uptimeSeconds) })}</span>
               </>
             )}
           </Show>
@@ -78,21 +79,25 @@ export default function SystemTool() {
             {(data) => (
               <Badge tone={data().elevated ? "success" : "neutral"}>
                 <IconShield class="size-3" />
-                {data().elevated ? "Administrator" : "Standard user"}
+                {data().elevated ? t("common.administrator") : t("tools.system.standardUser")}
               </Badge>
             )}
           </Show>
           <label class="flex items-center gap-2 text-xs text-muted">
-            <Switch checked={live()} onChange={setLive} label="Refresh live" />
-            Live
+            <Switch
+              checked={live()}
+              onChange={setLive}
+              label={t("tools.system.refreshLive")}
+            />
+            {t("tools.system.live")}
           </label>
           <Button size="sm" variant="ghost" onClick={() => void overview.refetch()} disabled={overview.isFetching}>
             <IconRefresh class={overview.isFetching ? "size-3.5 animate-spin" : "size-3.5"} />
-            Refresh
+            {t("common.refresh")}
           </Button>
           <Button size="sm" variant="ghost" onClick={() => void System.openPage("taskmanager")}>
             <IconExternal class="size-3.5" />
-            Task Manager
+            {t("tools.system.taskManager")}
           </Button>
         </div>
       </div>
@@ -105,13 +110,17 @@ export default function SystemTool() {
               when={overview.isError}
               fallback={
                 <>
-                  <Spinner /> Reading the machine…
+                  <Spinner /> {t("tools.system.reading")}
                 </>
               }
             >
               <span>
-                Could not read the machine:{" "}
-                {overview.error instanceof Error ? overview.error.message : "unknown error"}
+                {t("tools.system.readError", {
+                  message:
+                    overview.error instanceof Error
+                      ? overview.error.message
+                      : t("error.unknown"),
+                })}
               </span>
             </Show>
           </div>
@@ -123,30 +132,42 @@ export default function SystemTool() {
               <Card>
                 <CardBody class="flex flex-col gap-2">
                   <div class="flex items-center justify-between text-xs text-muted">
-                    <span class="flex items-center gap-1.5"><IconCpu class="size-3.5" /> CPU</span>
+                    <span class="flex items-center gap-1.5">
+                      <IconCpu class="size-3.5" /> {t("tools.system.cpu")}
+                    </span>
                     <span class="font-mono text-fg">{data().cpuUsage.toFixed(0)}%</span>
                   </div>
                   <Meter value={data().cpuUsage} tone={data().cpuUsage > 85 ? "warning" : "accent"} />
                   <p class="truncate text-[11px] text-faint">{data().cpuName}</p>
-                  <p class="text-[11px] text-faint">{data().cpuCores} logical processors</p>
+                  <p class="text-[11px] text-faint">
+                    {t("tools.system.logicalProcessors", { count: data().cpuCores })}
+                  </p>
                 </CardBody>
               </Card>
 
               <Card>
                 <CardBody class="flex flex-col gap-2">
                   <div class="flex items-center justify-between text-xs text-muted">
-                    <span class="flex items-center gap-1.5"><IconMemory class="size-3.5" /> Memory</span>
+                    <span class="flex items-center gap-1.5">
+                      <IconMemory class="size-3.5" /> {t("tools.system.memory")}
+                    </span>
                     <span class="font-mono text-fg">
                       {percent(data().memoryUsed, data().memoryTotal).toFixed(0)}%
                     </span>
                   </div>
                   <Meter value={percent(data().memoryUsed, data().memoryTotal)} tone={percent(data().memoryUsed, data().memoryTotal) > 90 ? "warning" : "accent"} />
                   <p class="text-[11px] text-faint">
-                    {formatBytes(data().memoryUsed)} of {formatBytes(data().memoryTotal)}
+                    {t("tools.system.memoryOf", {
+                      used: formatBytes(data().memoryUsed),
+                      total: formatBytes(data().memoryTotal),
+                    })}
                   </p>
                   <Show when={data().swapTotal > 0}>
                     <p class="text-[11px] text-faint">
-                      Swap {formatBytes(data().swapUsed)} / {formatBytes(data().swapTotal)}
+                      {t("tools.system.swap", {
+                        used: formatBytes(data().swapUsed),
+                        total: formatBytes(data().swapTotal),
+                      })}
                     </p>
                   </Show>
                 </CardBody>
@@ -155,11 +176,13 @@ export default function SystemTool() {
               <Card>
                 <CardBody class="flex flex-col gap-2">
                   <div class="flex items-center justify-between text-xs text-muted">
-                    <span class="flex items-center gap-1.5"><IconActivity class="size-3.5" /> Processes</span>
+                    <span class="flex items-center gap-1.5">
+                      <IconActivity class="size-3.5" /> {t("tools.system.processes")}
+                    </span>
                     <span class="font-mono text-fg">{data().processCount}</span>
                   </div>
                   <p class="text-[11px] leading-relaxed text-faint">
-                    Running now. The busiest by memory are below.
+                    {t("tools.system.processesNote")}
                   </p>
                 </CardBody>
               </Card>
@@ -167,7 +190,9 @@ export default function SystemTool() {
               <Card>
                 <CardBody class="flex flex-col gap-2">
                   <div class="flex items-center justify-between text-xs text-muted">
-                    <span class="flex items-center gap-1.5"><IconHardDrive class="size-3.5" /> Disks</span>
+                    <span class="flex items-center gap-1.5">
+                      <IconHardDrive class="size-3.5" /> {t("tools.system.disks")}
+                    </span>
                     <span class="font-mono text-fg">{data().disks.length}</span>
                   </div>
                   <For each={data().disks.slice(0, 3)}>
@@ -177,7 +202,9 @@ export default function SystemTool() {
                         <div class="flex-1">
                           <Meter value={percent(disk.total - disk.available, disk.total)} />
                         </div>
-                        <span class="shrink-0 text-faint">{formatBytes(disk.available)} free</span>
+                        <span class="shrink-0 text-faint">
+                          {t("tools.system.free", { size: formatBytes(disk.available) })}
+                        </span>
                       </div>
                     )}
                   </For>
@@ -188,8 +215,8 @@ export default function SystemTool() {
             <div class="grid gap-3 lg:grid-cols-5">
               <Card class="lg:col-span-3">
                 <CardHeader>
-                  <CardTitle>Top processes</CardTitle>
-                  <Badge tone="neutral">by memory</Badge>
+                  <CardTitle>{t("tools.system.topProcesses")}</CardTitle>
+                  <Badge tone="neutral">{t("tools.system.byMemory")}</Badge>
                 </CardHeader>
                 <CardBody class="p-0">
                   <ul class="divide-y divide-border">
@@ -209,17 +236,19 @@ export default function SystemTool() {
                     </For>
                   </ul>
                   <Show when={data().processes.length === 0}>
-                    <p class="px-4 py-6 text-center text-xs text-faint">No processes reported.</p>
+                    <p class="px-4 py-6 text-center text-xs text-faint">
+                      {t("tools.system.noProcesses")}
+                    </p>
                   </Show>
                 </CardBody>
               </Card>
 
               <Card class="lg:col-span-2">
                 <CardHeader>
-                  <CardTitle>Storage</CardTitle>
+                  <CardTitle>{t("tools.system.storage")}</CardTitle>
                   <Button size="sm" variant="ghost" onClick={() => void System.openPage("storage")}>
                     <IconExternal class="size-3.5" />
-                    Manage
+                    {t("tools.system.manage")}
                   </Button>
                 </CardHeader>
                 <CardBody class="flex flex-col gap-3">
@@ -230,7 +259,9 @@ export default function SystemTool() {
                           <span class="truncate text-fg">
                             {disk.name || disk.mountPoint}
                             <Show when={disk.removable}>
-                              <Badge tone="neutral" class="ml-2 px-1.5 py-0 text-[10px]">removable</Badge>
+                              <Badge tone="neutral" class="ml-2 px-1.5 py-0 text-[10px]">
+                                {t("tools.system.removable")}
+                              </Badge>
                             </Show>
                           </span>
                           <span class="shrink-0 font-mono text-[11px] text-faint">
@@ -242,16 +273,21 @@ export default function SystemTool() {
                           tone={percent(disk.total - disk.available, disk.total) > 92 ? "warning" : "accent"}
                         />
                         <span class="text-[10px] text-faint">
-                          {disk.mountPoint} · {disk.fileSystem || "unknown"} · {formatBytes(disk.available)} free
+                          {t("tools.system.diskMeta", {
+                            mountPoint: disk.mountPoint,
+                            filesystem: disk.fileSystem || t("tools.system.unknown"),
+                            size: formatBytes(disk.available),
+                          })}
                         </span>
                       </div>
                     )}
                   </For>
                   <Show when={data().batteryPercent >= 0}>
                     <div class="mt-1 flex items-center justify-between border-t border-border pt-3 text-xs">
-                      <span class="text-muted">Battery</span>
+                      <span class="text-muted">{t("tools.system.battery")}</span>
                       <span class="font-mono text-fg">
-                        {data().batteryPercent}% {data().batteryCharging ? "· charging" : ""}
+                        {data().batteryPercent}%{" "}
+                        {data().batteryCharging ? t("tools.system.charging") : ""}
                       </span>
                     </div>
                   </Show>

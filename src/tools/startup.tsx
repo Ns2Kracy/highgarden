@@ -15,6 +15,7 @@ import {
 import { Startup, System, type StartupItem } from "@/mygo";
 import { systemInfo } from "@/lib/system";
 import { cn } from "@/lib/cn";
+import { t } from "@/lib/i18n";
 
 type Filter = "all" | "enabled" | "disabled";
 
@@ -74,22 +75,22 @@ export default function StartupTool() {
   return (
     <div class="flex flex-col gap-4">
       <div class="flex flex-wrap items-end gap-3">
-        <Field label="Search" class="min-w-56 flex-1">
+        <Field label={t("common.search")} class="min-w-56 flex-1">
           <Input
             value={query()}
             onInput={(event) => setQuery(event.currentTarget.value)}
-            placeholder="Entry, command or location…"
-            aria-label="Search startup entries"
+            placeholder={t("tools.startup.searchPlaceholder")}
+            aria-label={t("tools.startup.searchLabel")}
           />
         </Field>
-        <Field label="Show">
+        <Field label={t("tools.startup.show")}>
           <Segmented
-            ariaLabel="Startup entries to show"
+            ariaLabel={t("tools.startup.showLabel")}
             value={filter()}
             options={[
-              { value: "all", label: `All ${counts().all}` },
-              { value: "enabled", label: `On ${counts().enabled}` },
-              { value: "disabled", label: `Off ${counts().disabled}` },
+              { value: "all", label: t("tools.startup.all", { count: counts().all }) },
+              { value: "enabled", label: t("tools.startup.on", { count: counts().enabled }) },
+              { value: "disabled", label: t("tools.startup.off", { count: counts().disabled }) },
             ]}
             onChange={setFilter}
           />
@@ -97,11 +98,11 @@ export default function StartupTool() {
         <div class="flex items-center gap-2 pb-0.5">
           <Button variant="ghost" onClick={() => void items.refetch()} disabled={items.isFetching}>
             <IconRefresh class={items.isFetching ? "size-3.5 animate-spin" : "size-3.5"} />
-            Refresh
+            {t("common.refresh")}
           </Button>
           <Button variant="ghost" onClick={() => void System.openPage("startup")}>
             <IconExternal class="size-3.5" />
-            Windows Startup
+            {t("tools.startup.windowsStartup")}
           </Button>
         </div>
       </div>
@@ -110,7 +111,7 @@ export default function StartupTool() {
         <div class="flex items-start gap-2 rounded-xl border border-warning/25 bg-warning/10 px-4 py-3 text-xs text-warning">
           <IconShield class="mt-0.5 size-3.5 shrink-0" />
           <span>
-            Machine-wide entries need administrator rights. User entries can be changed now.
+            {t("tools.startup.needsAdminNote")}
           </span>
         </div>
       </Show>
@@ -123,7 +124,7 @@ export default function StartupTool() {
             <span>
               {items.error instanceof Error
                 ? items.error.message
-                : "Could not read the startup entries."}
+                : t("tools.startup.readError")}
             </span>
           </div>
         }
@@ -134,7 +135,7 @@ export default function StartupTool() {
               when={!items.isPending}
               fallback={
                 <div class="flex items-center gap-2 px-4 py-8 text-sm text-muted">
-                  <Spinner /> Reading startup entries…
+                  <Spinner /> {t("tools.startup.reading")}
                 </div>
               }
             >
@@ -161,12 +162,12 @@ export default function StartupTool() {
                           <Show when={item.needsAdmin}>
                             <Badge tone={elevated() ? "success" : "warning"} class="px-1.5 py-0 text-[10px]">
                               <IconShield class="size-3" />
-                              machine
+                              {t("tools.startup.machine")}
                             </Badge>
                           </Show>
                           <Show when={!item.enabled}>
                             <Badge tone="neutral" class="px-1.5 py-0 text-[10px]">
-                              disabled by Highgarden
+                              {t("tools.startup.disabledBy")}
                             </Badge>
                           </Show>
                         </div>
@@ -174,7 +175,12 @@ export default function StartupTool() {
                       </div>
                       <Switch
                         checked={item.enabled}
-                        label={`${item.enabled ? "Disable" : "Enable"} ${item.name}`}
+                        label={t("tools.startup.toggle", {
+                          action: item.enabled
+                            ? t("tools.startup.disable")
+                            : t("tools.startup.enable"),
+                          name: item.name,
+                        })}
                         class={blocked(item) || pending() === item.id ? "opacity-50" : ""}
                         onChange={() => {
                           if (blocked(item) || pending() === item.id) return;
@@ -187,7 +193,7 @@ export default function StartupTool() {
               </ul>
               <Show when={visible().length === 0}>
                 <p class="px-4 py-10 text-center text-sm text-muted">
-                  No startup entry matches that filter.
+                  {t("tools.startup.noMatch")}
                 </p>
               </Show>
             </Show>
@@ -205,10 +211,10 @@ export default function StartupTool() {
       </Show>
 
       <p class="text-[11px] leading-relaxed text-faint">
-        Registry entries are moved to <code class="font-mono">Software\Highgarden\StartupDisabled</code>{" "}
-        instead of deleted, and Startup folder entries are renamed with a{" "}
-        <code class="font-mono">.disabled</code> suffix. Re-enable them here or with Windows' own
-        Startup apps page.
+        {t("tools.startup.footerPrefix")}{" "}
+        <code class="font-mono">Software\Highgarden\StartupDisabled</code>{" "}
+        {t("tools.startup.footerMiddle")} <code class="font-mono">.disabled</code>{" "}
+        {t("tools.startup.footerSuffix")}
       </p>
     </div>
   );

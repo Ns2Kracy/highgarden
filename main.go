@@ -8,7 +8,6 @@ import (
 	"github.com/egoist/mygo"
 	"github.com/egoist/mygo/plugins/fetch"
 	"github.com/egoist/mygo/plugins/sqlite"
-	"github.com/egoist/mygo/plugins/updater"
 	"github.com/egoist/mygo/plugins/updater/native"
 	"github.com/egoist/mygo/plugins/watch"
 	"github.com/egoist/mygo/plugins/websocket"
@@ -45,7 +44,6 @@ func main() {
 	mygo.Use(fetch.Plugin)
 	mygo.Use(websocket.Plugin)
 	mygo.Use(sqlite.Plugin)
-	mygo.Use(updater.Plugin)
 	mygo.Use(native.Plugin)
 	mygo.Use(watch.New(watch.Options{}))
 
